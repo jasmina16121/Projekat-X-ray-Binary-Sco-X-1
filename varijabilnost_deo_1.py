@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 # 1. UČITAVANJE PODATAKA I IZBOR FOTOMETRIJSKOG FILTERA
 # ============================================================
 
+print("\n**** Izbor filtera ****")
 def ucitaj_krivu(fajl, ime_objekta, filter_kanal="g"):
     df = pd.read_csv(fajl, comment="#")  # učitavanje CSV fajla; redovi koji počinju sa # se preskaču
 
@@ -21,7 +22,7 @@ def ucitaj_krivu(fajl, ime_objekta, filter_kanal="g"):
     vreme = df["JD"]  # vreme posmatranja u Julijanskim danima
     fluks = df["Flux"]  # instrumentalni fluks
     greska_fluksa = df["Flux Error"]  # greška merenja fluksa
-
+    
     print(f"\n{ime_objekta}")
     print("Broj tačaka posle izbora filtera:", len(vreme))
     print("JD opseg:", np.min(vreme), "-", np.max(vreme))
@@ -43,10 +44,11 @@ df_cyg, vreme_cyg, fluks_cyg, greska_cyg = ucitaj_krivu("cyg.csv", "Cyg X-2")
 # ============================================================
 
 def nacrtaj_fluks(vreme, fluks, greska, ime_objekta):
-    plt.figure(figsize=(11, 5))
+    jd0 = 2450000
+    plt.figure(figsize=(8, 5))
 
     plt.errorbar(
-        vreme, fluks,
+        vreme - jd0, fluks,
         yerr=greska,             # greške se ne izbacuju; prikazuju se kao errorbar
         fmt=".",                 # tačke
         markersize=2,            # veličina tačke
@@ -55,10 +57,9 @@ def nacrtaj_fluks(vreme, fluks, greska, ime_objekta):
         alpha=0.6,               # transparentnost
         label=ime_objekta
     )
-
-    plt.xlabel("JD")
-    plt.ylabel("Fluks")
-    plt.title(f"Kriva sjaja (fluks): {ime_objekta}")
+    plt.xlabel(f"JD - {jd0}")    # JD 2450000.0=1995−10−09 12:00 UT
+    plt.ylabel(r" g Fluks [mJy]")
+    plt.title(f"Kriva sjaja: {ime_objekta}")
     plt.legend()
     plt.grid(alpha=0.3)
     plt.tight_layout()
@@ -70,14 +71,15 @@ def nacrtaj_fluks(vreme, fluks, greska, ime_objekta):
 # ============================================================
 
 def nacrtaj_magnitudu(df, ime_objekta):
+    jd0 = 2450000
     vreme = df["JD"]
     magnituda = df["Mag"]
     greska_magnitude = df["Mag Error"]
 
-    plt.figure(figsize=(11, 5))
+    plt.figure(figsize=(8, 5))
 
     plt.errorbar(
-        vreme, magnituda,
+        vreme - jd0, magnituda,
         yerr=greska_magnitude,
         fmt=".",
         markersize=2,
@@ -88,8 +90,8 @@ def nacrtaj_magnitudu(df, ime_objekta):
     )
 
     plt.gca().invert_yaxis()  # veća magnitudama manji sjaj
-    plt.xlabel("JD")
-    plt.ylabel("Magnituda")
+    plt.xlabel(f"JD - {jd0}")
+    plt.ylabel(r"$g$ magnituda")
     plt.title(f"Kriva sjaja (magnituda): {ime_objekta}")
     plt.legend()
     plt.grid(alpha=0.3)
@@ -106,9 +108,9 @@ nacrtaj_fluks(vreme_her, fluks_her, greska_her, "Her X-1")
 nacrtaj_fluks(vreme_cyg, fluks_cyg, greska_cyg, "Cyg X-2")
 
 # Po potrebi se mogu prikazati i magnitude:
-# nacrtaj_magnitudu(df_sco, "Sco X-1")
-# nacrtaj_magnitudu(df_her, "HZ Her")
-# nacrtaj_magnitudu(df_cyg, "Cyg X-2")
+#nacrtaj_magnitudu(df_sco, "Sco X-1")
+#nacrtaj_magnitudu(df_her, "HZ Her")
+#nacrtaj_magnitudu(df_cyg, "Cyg X-2")
 
 
 # ============================================================
@@ -175,16 +177,16 @@ vreme_cyg_cisto2, fluks_cyg_cist2, greska_cyg_cista2 = ukloni_velike_greske(
 # 8. VIZUELNA PROVERA KONAČNO FILTRIRANIH KRIVIH SJAJA
 # ============================================================
 
-nacrtaj_fluks(vreme_sco_cisto2, fluks_sco_cist2, greska_sco_cista2, "Sco X-1 konačno očišćeno")
-nacrtaj_fluks(vreme_her_cisto2, fluks_her_cist2, greska_her_cista2, "Her X-1 konačno očišćeno")
-nacrtaj_fluks(vreme_cyg_cisto2, fluks_cyg_cist2, greska_cyg_cista2, "Cyg X-2 konačno očišćeno")
+nacrtaj_fluks(vreme_sco_cisto2, fluks_sco_cist2, greska_sco_cista2, "Sco X-1 nakon čišćenja")
+nacrtaj_fluks(vreme_her_cisto2, fluks_her_cist2, greska_her_cista2, "Her X-1 nakon čišćenja")
+nacrtaj_fluks(vreme_cyg_cisto2, fluks_cyg_cist2, greska_cyg_cista2, "Cyg X-2 nakon čišćenja")
 
 
 # ============================================================
 # 9. PROVERA BROJA TAČAKA PRE I POSLE FILTRIRANJA
 # ============================================================
 
-print("\nBroj tačaka pre i posle čišćenja:")
+print("\n**** Broj tačaka pre i posle čišćenja ****\n")
 
 print("Sco X-1:", len(fluks_sco), "->", len(fluks_sco_cist2))
 print("Her X-1:", len(fluks_her), "->", len(fluks_her_cist2))
@@ -196,7 +198,7 @@ print("Cyg X-2:", len(fluks_cyg), "->", len(fluks_cyg_cist2))
 # ============================================================
 
 from scipy.stats import skew, kurtosis
-
+print("\n**** Osnovna statistika ****")
 def osnovna_statistika(vreme, fluks, greska, ime_objekta):
     # srednja vrednost fluksa
     srednja = np.mean(fluks)
@@ -297,8 +299,8 @@ def nacrtaj_histogram(fluks, ime_objekta):
     kde_vrednosti = kde(x)
     plt.plot(x, kde_vrednosti, label="KDE")
 
-    plt.xlabel("Fluks")
-    plt.ylabel("Gustina verovatnoće")
+    plt.xlabel("Fluks [mJy]")
+    plt.ylabel(r"$p(F)$ [$\mathrm{mJy}^{-1}$]")
     plt.title(f"Raspodela fluksa: {ime_objekta}")
     plt.legend()
     plt.grid(alpha=0.3)
@@ -331,7 +333,7 @@ hist_cyg = nacrtaj_histogram(fluks_cyg_cist2, "Cyg X-2")
 # ============================================================
 
 from astropy.timeseries import LombScargle
-
+print("\n**** Lomb - Scargle ****")
 def nacrtaj_periodogram(vreme, fluks, ime_objekta):
     # frekvencije
     frekvencija, snaga = LombScargle(vreme, fluks).autopower()
@@ -339,11 +341,11 @@ def nacrtaj_periodogram(vreme, fluks, ime_objekta):
     # pretvaranje u period
     period = 1 / frekvencija
 
-    plt.figure(figsize=(10,5))
+    plt.figure(figsize=(8,5))
     plt.plot(period, snaga)
 
-    plt.xlabel("Period (dani)")
-    plt.ylabel("Snaga")
+    plt.xlabel("Period (days)")
+    plt.ylabel("Lomb-Scargle Snaga")
     plt.title(f"Lomb–Scargle periodogram: {ime_objekta}")
 
     plt.xscale("log")  # bolje se vide različite skale
@@ -425,8 +427,8 @@ def nacrtaj_acf(vreme, fluks, ime):
     plt.figure(figsize=(8,5))
     plt.plot(lag, acf, marker='o', ms=3)
     plt.axhline(0, linestyle='--', linewidth=1)
-    plt.xlabel("Vremenski pomak (dani)")
-    plt.ylabel("ACF")
+    plt.xlabel(r"Vremenski pomak $\tau$ [days]")
+    plt.ylabel("DCF")
     plt.title(f"Autokorelaciona funkcija: {ime}")
     plt.grid(alpha=0.3)
     plt.tight_layout()
@@ -445,10 +447,14 @@ acf_her = nacrtaj_acf(vreme_her_cisto2, fluks_her_cist2, "Her X-1")
 acf_cyg = nacrtaj_acf(vreme_cyg_cisto2, fluks_cyg_cist2, "Cyg X-2")
 
 
+
+
+
+
 # ============================================================
 # 14. MIKROVARIJABILNOST 
 # ============================================================
-
+print("\n**** Mikrovarijabilnost ****")
 def mikrovarijabilnost(vreme, fluks, ime_objekta):
     vreme = np.array(vreme)
     fluks = np.array(fluks)
@@ -507,7 +513,7 @@ def mikrovarijabilnost(vreme, fluks, ime_objekta):
     # ======================================================
     plt.figure(figsize=(8,5))
     plt.hist(brzina_promene, bins=40, alpha=0.7)
-    plt.xlabel(r"$\Delta F / \Delta t$")
+    plt.xlabel(r"$\Delta F / \Delta t \, [mJy / day]$")
     plt.ylabel("Broj tačaka")
     plt.title(f"Mikrovarijabilnost: {ime_objekta}")
     plt.grid(alpha=0.3)
@@ -533,9 +539,9 @@ mikro_cyg = mikrovarijabilnost(vreme_cyg_cisto2, fluks_cyg_cist2, "Cyg X-2")
 
 
 # ============================================================
-# 15. DODATNA VREMENSKA ANALIZA (segmentacija)
+# 15. DODATNA VREMENSKA ANALIZA (SEGMENTACIJA)
 # ============================================================
-
+print("\n**** Segmentacija ****")
 def segmentacija(vreme, fluks, ime_objekta, broj_segmenata=3):
     vreme = np.array(vreme)
     fluks = np.array(fluks)
@@ -549,11 +555,12 @@ def segmentacija(vreme, fluks, ime_objekta, broj_segmenata=3):
     segmenti = np.array_split(np.arange(len(vreme)), broj_segmenata)
 
     rezultati_segmenata = []
-
-    plt.figure(figsize=(10,5))
+    
+    jd0 = 2450000
+    plt.figure(figsize=(8,5))
 
     for i, seg in enumerate(segmenti):
-        plt.scatter(vreme[seg], fluks[seg], s=5, label=f"Segment {i+1}")
+        plt.scatter(vreme[seg]-jd0, fluks[seg], s=5, label=f"Segment {i+1}")
 
         # osnovna statistika po segmentu
         srednja = np.mean(fluks[seg])
@@ -568,9 +575,8 @@ def segmentacija(vreme, fluks, ime_objekta, broj_segmenata=3):
             "srednja": srednja,
             "std": std
         })
-
-    plt.xlabel("JD")
-    plt.ylabel("Fluks")
+    plt.xlabel(f"JD - {jd0}")
+    plt.ylabel("Fluks [mJy]")
     plt.title(f"Segmentacija svetlosne krive: {ime_objekta}")
     plt.legend()
     plt.grid(alpha=0.3)
@@ -590,11 +596,11 @@ seg_cyg = segmentacija(vreme_cyg_cisto2, fluks_cyg_cist2, "Cyg X-2")
 
 
 
-
 # ============================================================
-# 16. UPOREDNA ANALIZA OSNOVNIH PARAMETARA VARIJABILNOSTI
+# 16. FIZIČKI SMISLENO POREĐENJE SISTEMA
+#     UPOREDNA ANALIZA OSNOVNIH PARAMETARA VARIJABILNOSTI
 # ============================================================
-
+print("\n**** Poređenje parametara ****")
 tabela_uporedna = pd.DataFrame({
     "Sistem": ["Sco X-1", "Her X-1", "Cyg X-2"],
 
@@ -620,10 +626,6 @@ tabela_uporedna = pd.DataFrame({
 
 
 
-# ============================================================
-# 17. FIZIČKI SMISLENO POREĐENJE SISTEMA
-# ============================================================
-
 for i, sistem in tabela_uporedna.iterrows():
 
     ime = sistem["Sistem"]
@@ -644,11 +646,10 @@ for i, sistem in tabela_uporedna.iterrows():
 
 
 
-
 # ============================================================
-# RELATIVNI FLUKS
+# 17. KS TEST 
 # ============================================================
-
+print("\n**** KS Test ****")
 def relativni_fluks(fluks):
     return fluks / np.mean(fluks)
 
@@ -657,9 +658,6 @@ her_rel = relativni_fluks(fluks_her_cist2)
 cyg_rel = relativni_fluks(fluks_cyg_cist2)
 
 
-# ============================================================
-# KS TEST
-# ============================================================
 
 from scipy.stats import ks_2samp
 
@@ -677,7 +675,88 @@ ks_test(her_rel, cyg_rel, "Her X-1", "Cyg X-2")
 
 
 
+# ============================================================
+# 18. KULLBACK-LEIBLER DIVERGENCIJA
+#    POREĐENJE RASPODELA RELATIVNOG FLUKSA
+# ============================================================
 
+from scipy.stats import entropy
+
+print("\n**** KL Divergencija ****")
+
+def kl_divergencija(a, b, ime1, ime2, bins=40):
+    # zajednički opseg da bi histogrami bili uporedivi
+    xmin = min(np.min(a), np.min(b))
+    xmax = max(np.max(a), np.max(b))
+
+    # histogrami kao procena raspodele verovatnoće
+    p, binovi = np.histogram(a, bins=bins, range=(xmin, xmax), density=False)
+    q, _ = np.histogram(b, bins=binovi, density=False)
+
+    
+
+# ============================================================
+# PLOT HISTOGRAMA
+# ============================================================
+
+    plt.figure(figsize=(8,5))
+
+    plt.hist(a,
+         bins=binovi,
+         density=True,
+         alpha=0.45,
+         label=ime1,
+         histtype="stepfilled")
+
+    plt.hist(b,
+         bins=binovi,
+         density=True,
+         alpha=0.45,
+         label=ime2,
+         histtype="stepfilled")
+
+    plt.xlabel("Fluks [mJy]")
+    plt.ylabel(r"$p(F)$ [$\mathrm{mJy}^{-1}$]")
+
+    plt.title(f"KL poređenje: {ime1} vs {ime2}")
+
+    plt.legend()
+    plt.grid(alpha=0.3)
+
+    plt.show()
+
+
+# pretvaranje u verovatnoće
+    p = p / np.sum(p)
+    q = q / np.sum(q)
+
+    # mala vrednost da se izbegne deljenje nulom i log(0)
+    eps = 1e-12
+    p = p + eps
+    q = q + eps
+
+    # ponovna normalizacija
+    p = p / np.sum(p)
+    q = q / np.sum(q)
+
+    # KL divergencija
+    dkl_pq = entropy(p, q)
+    dkl_qp = entropy(q, p)
+      
+    print(f"\n{ime1} vs {ime2}")
+    print(f"D_KL({ime1} || {ime2}) = {dkl_pq:.4f}")
+    print(f"D_KL({ime2} || {ime1}) = {dkl_qp:.4f}")
+
+    return {
+        "poredjenje": f"{ime1} vs {ime2}",
+        "D_KL_1_2": dkl_pq,
+        "D_KL_2_1": dkl_qp
+    }
+
+
+kl_sco_her = kl_divergencija(sco_rel, her_rel, "Sco X-1", "Her X-1")
+kl_sco_cyg = kl_divergencija(sco_rel, cyg_rel, "Sco X-1", "Cyg X-2")
+kl_her_cyg = kl_divergencija(her_rel, cyg_rel, "Her X-1", "Cyg X-2")
 
 
 
